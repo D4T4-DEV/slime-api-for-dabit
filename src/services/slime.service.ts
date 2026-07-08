@@ -14,12 +14,19 @@ export class SlimeService {
         ownerId: string
     ) {
         const SLIME_ID = await this._idService.getUUID();
-        return await this._slimeModel.save({
+        await this._slimeModel.save({
             id: SLIME_ID,
             ownerId: ownerId,
             name: name,
             color: color,
         });
+
+        return {
+            id: SLIME_ID,
+            ownerId: ownerId,
+            name: name,
+            color: color,
+        }
     }
 
     // Funcion que actualiza un slime
@@ -29,10 +36,17 @@ export class SlimeService {
         name: string,
         color: string,
     ) {
-        return await this._slimeModel.update(slimeId, ownerId, {
+        await this._slimeModel.update(slimeId, ownerId, {
             name: name,
             color: color,
         });
+
+        return {
+            id: slimeId,
+            ownerId: ownerId,
+            name: name,
+            color: color,
+        }
     }
 
     // Funcion que elimina un slime
