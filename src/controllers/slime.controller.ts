@@ -14,13 +14,13 @@ export class SlimeController {
             return res.status(400).json({ status: 400, message: "Datos incompletos" });
         }
 
-        const { userId } = authData;
+        const { authId } = authData;
 
         try {
             const newSlime = await this._slimeService.createSlime(
                 name,
                 color,
-                userId
+                authId
             );
 
             return res.status(201).json({
@@ -43,13 +43,13 @@ export class SlimeController {
             return res.status(400).json({ status: 400, message: "Datos incompletos" });
         }
 
-        const { userId } = authData;
+        const { authId } = authData;
 
         try {
             // Convertimos explícitamente a String
             const updateSlime = await this._slimeService.updateSlime(
                 String(slimeId),
-                String(userId),
+                String(authId),
                 String(name),
                 String(color),
             );
@@ -73,12 +73,12 @@ export class SlimeController {
             return res.status(400).json({ status: 400, message: "Datos incompletos" });
         }
 
-        const { userId } = authData;
+        const { authId } = authData;
 
         try {
             await this._slimeService.deleteSlime(
                 String(slimeId),
-                String(userId)
+                String(authId)
             );
             return res.status(204).send();
         } catch (error) {
@@ -94,10 +94,10 @@ export class SlimeController {
             return res.status(400).json({ status: 400, message: "Datos incompletos" });
         }
 
-        const { userId } = authData;
+        const { authId } = authData;
 
         try {
-            const slimes = await this._slimeService.getMySlimes(String(userId));
+            const slimes = await this._slimeService.getMySlimes(String(authId));
 
             return res.status(200).json({
                 status: 200,
@@ -118,13 +118,13 @@ export class SlimeController {
             return res.status(400).json({ status: 400, message: "Datos incompletos" });
         }
 
-        const { userId } = authData;
+        const { authId } = authData;
 
         try {
             // Convertir la query a String
             const slime = await this._slimeService.getMySlimeById(
                 String(slimeId),
-                String(userId)
+                String(authId)
             );
 
             return res.status(200).json({
