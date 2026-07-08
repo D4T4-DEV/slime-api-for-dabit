@@ -1,3 +1,6 @@
+import type { Database } from "better-sqlite3";
+import db from "../database/createDatabase.js";
+
 export interface Slime {
     id: string;
     ownerId: string;
@@ -6,89 +9,125 @@ export interface Slime {
 }
 
 export class SlimeModel {
-    private Slimes: Slime[] = [];
+    constructor(private readonly db: Database) { }
 
-    async saveSlime(data: Omit<Slime, 'id'> & { id?: string }): Promise<Slime> {
-        const newSlime: Slime = {
-            id: data.id || crypto.randomUUID(),
-            ownerId: data.ownerId,
-            name: data.name,
-            color: data.color,
-        };
+    async save(data: Slime): Promise<void> {
+        try {
+            // Preparamos la sentencia SQL
+            const stmt = this.db.prepare('INSERT INTO slimes (id, owner_id, name, color) VALUES (?, ?, ?, ?)');
 
-        this.Slimes.push(newSlime);
-        return newSlime;
+            // Ejecutamos lo que hemos preparado
+            stmt.run(
+                data.id,
+                data.ownerId,
+                data.name,
+                data.color
+            );
+        } catch (error) {
+            console.error("Error al guardar un slime con better-sqlite3:", error);
+            throw error;
+        }
     }
 
-    // Usamos Partial<Slime> pero garantizamos el retorno de un Slime completo
-    async update(id: string, data: Partial<Slime>): Promise<Slime | null> {
-        const slimeIndex = this.Slimes.findIndex(slime => slime.id === id);
+    async update(slimeId: string, ownerId: string, data: Partial<Slime>): Promise<void> {
+        try {
 
-        if (slimeIndex === -1) {
-            return null;
+            const oldData = await this.getById(slimeId, ownerId);
+
+            if (!oldData) {
+                throw new Error('Slime does not exist');
+            }
+
+            const updatedName = data.name ?? oldData.name;
+            const updatedColor = data.color ?? oldData.color;
+
+            const stmt = this.db.prepare(
+                'UPDATE slimes SET name = ?, color = ? WHERE id = ? AND owner_id = ?'
+            );
+
+            // Ejecutamos pasándolo en el orden EXACTO de los '?' en la query:
+            // 1º name, 2º color, 3º slimeId, 4º ownerId
+            stmt.run(
+                updatedName,
+                updatedColor,
+                slimeId,
+                ownerId
+            );
+
+            return;
+
+        } catch (error) {
+            console.error("Error al actualizar un slime con better-sqlite3:", error);
+            throw error;
         }
-
-        const currentSlime = this.Slimes[slimeIndex];
-
-        if (!currentSlime) return null;
-
-        const updatedSlime: Slime = {
-            ...currentSlime,
-            ...data,
-            id: currentSlime.id
-        };
-
-        this.Slimes[slimeIndex] = updatedSlime;
-
-        return updatedSlime;
     }
 
-    async delete(id: string, ownerId: string): Promise<boolean> {
-        // 1. Buscar si el Slime existe en el array
-        const slimeIndex = this.Slimes.findIndex(slime => slime.id === id);
+    async delete(slimeId: string, ownerId: string): Promise<boolean> {
+        try {
+            // Preparamos la sentencia SQL con la cláusula WHERE de seguridad
+            const stmt = this.db.prepare('DELETE FROM slimes WHERE id = ? AND owner_id = ?');
 
-        // 2. IDEMPOTENCIA: Si el Slime no existe, terminamos con éxito (return temprano).
-        // No lanzamos error, porque el objetivo final ya se cumplió: el Slime NO está en el sistema.
-        if (slimeIndex === -1) {
-            return false;
+            // Ejecutamos la sentencia
+            const info = stmt.run(slimeId, ownerId);
+
+            // info.changes contiene el número de filas borradas
+            // Si es > 0 devuelve true (se borró), si es 0 devuelve false (no existía o no era el dueño)
+            return info.changes > 0;
+
+        } catch (error) {
+            console.error("Error al eliminar un slime con better-sqlite3:", error);
+            throw error;
         }
-
-        const currentSlime = this.Slimes[slimeIndex];
-
-        if (!currentSlime) {
-            return false;
-        }
-
-        // 3. Validación de Autorización
-        // Si existe, pero NO le pertenece al dueño que lo solicita, bloqueamos la acción.
-        if (currentSlime.ownerId !== ownerId) {
-            throw new Error("No tienes permisos para eliminar este Slime.");
-        }
-
-        // 4. Eliminación
-        // Removemos el Slime del array en memoria
-        this.Slimes.splice(slimeIndex, 1);
-
-        return true;
     }
 
     async getByOwner(ownerId: string): Promise<Slime[]> {
-        return this.Slimes.filter(slime => slime.ownerId === ownerId);
+        try {
+            // Preparamos la sentencia SQL para traer todos los registros del owner
+            const stmt = this.db.prepare('SELECT id, owner_id, name, color FROM slimes WHERE owner_id = ?');
+
+            // Usamos .all() para obtener el array de filas
+            const rows = stmt.all(ownerId) as Array<{ id: string; owner_id: string; name: string; color: string }>;
+
+            // Mapeamos las filas a la estructura de la entidad Slime
+            return rows.map(row => ({
+                id: row.id,
+                ownerId: row.owner_id,
+                name: row.name,
+                color: row.color
+            }));
+
+        } catch (error) {
+            console.error("Error al obtener los slimes por owner con better-sqlite3:", error);
+            throw error;
+        }
     }
 
-    async getBySlimeId(slimeId: string, ownerId: string): Promise<Slime | null> {
-        // Buscamos el primer slime que coincida con el id provisto
-        const slime = this.Slimes.find(slime => slime.id === slimeId);
+    async getById(slimeId: string, ownerId: string): Promise<Slime | null> {
+        try {
+            // Preparamos la sentencia SQL
+            const stmt = this.db.prepare('SELECT id, owner_id, name, color FROM slimes WHERE id = ? AND owner_id = ?');
 
-        if (slime?.ownerId !== ownerId) {
-            throw new Error("No tienes permisos para consultar este Slime.");
+            // Tipamos el resultado como un objeto con las columnas de la BD o undefined
+            const row = stmt.get(slimeId, ownerId) as { id: string; owner_id: string; name: string; color: string } | undefined;
+
+            // Si no hay registro, retornamos null
+            if (!row) {
+                return null;
+            }
+
+            // Mapeamos y retornamos la entidad Slime
+            return {
+                id: row.id,
+                ownerId: row.owner_id,
+                name: row.name,
+                color: row.color
+            };
+
+        } catch (error) {
+            console.error("Error al obtener un slime por id con better-sqlite3:", error);
+            throw error;
         }
-
-        // Si .find() no encuentra nada, devuelve 'undefined'. 
-        // Para cumplir estrictamente con la firma de la función, usamos el operador 
-        // nullish coalescing (??) para retornar 'null' en su lugar.
-        return slime ?? null;
     }
 }
 
-export const slimeModel = new SlimeModel();
+export const slimeModel = new SlimeModel(db);

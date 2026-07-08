@@ -24,5 +24,16 @@ db.exec(`
     )
 `);
 
+db.exec(`
+    CREATE TABLE IF NOT EXISTS slimes (
+        id TEXT PRIMARY KEY,
+        owner_id TEXT,
+        name TEXT,
+        color TEXT,
+        FOREIGN KEY (owner_id) REFERENCES auth(id) ON DELETE CASCADE
+    )
+`);
+
+
 
 export default db;
