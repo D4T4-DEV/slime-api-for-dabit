@@ -2,7 +2,7 @@ import { jwtVerify, SignJWT, type JWTPayload } from "jose";
 import { JWT_ACCESS_TOKEN_SECRET, JWT_REFRESH_TOKEN_SECRET } from "../core/constants/jwt.constants.js";
 
 export interface AuthTokenPayload extends JWTPayload {
-    authId: string;
+    userId: string;
     sessionId: string;
 }
 
