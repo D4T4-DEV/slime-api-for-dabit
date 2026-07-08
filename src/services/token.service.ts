@@ -2,7 +2,7 @@ import { jwtVerify, SignJWT, type JWTPayload } from "jose";
 import { JWT_ACCESS_TOKEN_SECRET, JWT_REFRESH_TOKEN_SECRET } from "../core/constants/jwt.constants.js";
 
 export interface AuthTokenPayload extends JWTPayload {
-    userId: string;
+    authId: string;
     sessionId: string;
 }
 
@@ -20,7 +20,12 @@ export class TokenService {
     }
 
 
-    async generateAccessToken(payload: any, expiration: number | string | Date): Promise<string> {
+    async generateAccessToken(
+        payload: {
+            authId: string,
+        },
+        expiration: number | string | Date
+    ): Promise<string> {
         const token = await new SignJWT(payload)
             .setProtectedHeader({ alg: "HS256" })
             .setIssuedAt()
@@ -30,7 +35,12 @@ export class TokenService {
         return token;
     }
 
-    async generateRefreshToken(payload: any, expiration: number | string | Date): Promise<string> {
+    async generateRefreshToken(
+        payload: {
+            sessionId: string,
+        },
+        expiration: number | string | Date
+    ): Promise<string> {
         const token = await new SignJWT(payload)
             .setProtectedHeader({ alg: "HS256" })
             .setIssuedAt()
