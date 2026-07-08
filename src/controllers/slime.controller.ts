@@ -18,9 +18,9 @@ export class SlimeController {
 
         try {
             const newSlime = await this._slimeService.createSlime(
-                String(name),
-                String(color),
-                String(userId)
+                name,
+                color,
+                userId
             );
 
             return res.status(201).json({
