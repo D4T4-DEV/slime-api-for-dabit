@@ -101,7 +101,9 @@ export class AuthController {
                 });
             }
 
-            const sessionRefresh = await this.authService.logout(authData.sessionId);
+            const { sessionId } = authData;
+
+            const sessionRefresh = await this.authService.logout(sessionId);
 
             await this.cookieService.clear(res, 'auth_refresh_token');
             await this.cookieService.clear(res, 'auth_access_token');
