@@ -30,7 +30,7 @@ authRouter.put("/refresh",
 // Cierra una sesión por medio de tokens
 // Cookies: { refreshToken } -> Devuelve el payload del token
 authRouter.post("/logout",
-    authMiddleware(tokenService, false),
+    authMiddleware(tokenService, true),
     authController.logout.bind(authController)
 );
 

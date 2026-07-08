@@ -37,6 +37,7 @@ export class TokenService {
 
     async generateRefreshToken(
         payload: {
+            authId: string,
             sessionId: string,
         },
         expiration: number | string | Date

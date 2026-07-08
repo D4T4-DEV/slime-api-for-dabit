@@ -69,6 +69,7 @@ export class AuthService {
         );
 
         const refreshToken = await this._tokenService.generateRefreshToken({
+            authId: authData.id,
             sessionId: SESSION_ID,
         },
             expirationRefreshToken
@@ -156,6 +157,7 @@ export class AuthService {
         );
 
         const refreshToken = await this._tokenService.generateRefreshToken({
+            authId: session.auth_id,
             sessionId: session.id,
         },
             expirationRefreshToken

@@ -1,5 +1,6 @@
 import { type NextFunction, type Request, type Response } from 'express'
 import { slimeService, type SlimeService } from '../services/slime.service.js';
+import { createSlimeSchema, deleteSlimeSchema, getMySlimeByIdSchema, getMySlimesSchema, updateSlimeSchema } from '../schemas/slime.schema.js';
 
 export class SlimeController {
 
@@ -7,21 +8,13 @@ export class SlimeController {
 
     // Funcion que crea un slime
     async createSlime(req: Request, res: Response, next: NextFunction) {
-        const authData = req.auth;
-        const { name, color } = req.body;
-
-        if (!name || !color || !authData) {
-            return res.status(400).json({ status: 400, message: "Datos incompletos" });
-        }
-
-        const { authId } = authData;
-
         try {
-            const newSlime = await this._slimeService.createSlime(
-                name,
-                color,
-                authId
-            );
+            // Validamos req completo (body y auth)
+            const { body, auth } = createSlimeSchema.parse({ body: req.body, auth: req.auth });
+            const { name, color } = body;
+            const { authId } = auth;
+
+            const newSlime = await this._slimeService.createSlime(name, color, authId);
 
             return res.status(201).json({
                 status: 201,
@@ -35,29 +28,18 @@ export class SlimeController {
 
     // Funcion que actualiza un slime
     async updateSlime(req: Request, res: Response, next: NextFunction) {
-        const authData = req.auth;
-
-        const { slimeId, name, color } = req.body;
-
-        if (!name || !color || !authData || !slimeId) {
-            return res.status(400).json({ status: 400, message: "Datos incompletos" });
-        }
-
-        const { authId } = authData;
-
         try {
-            // Convertimos explícitamente a String
-            const updateSlime = await this._slimeService.updateSlime(
-                String(slimeId),
-                String(authId),
-                String(name),
-                String(color),
-            );
+            const { body, auth } = updateSlimeSchema.parse({ body: req.body, auth: req.auth });
+            const { slimeId, name, color } = body;
+            const { authId } = auth;
+
+            // Ya no necesitas castear con String(), Zod garantiza que son strings viles y puros
+            const updatedSlime = await this._slimeService.updateSlime(slimeId, authId, name, color);
 
             return res.status(200).json({
                 status: 200,
                 message: "Devolviendo los datos actualizados del slime",
-                data: updateSlime
+                data: updatedSlime
             });
         } catch (error) {
             next(error);
@@ -66,20 +48,12 @@ export class SlimeController {
 
     // Funcion que elimina un slime
     async deleteSlime(req: Request, res: Response, next: NextFunction) {
-        const authData = req.auth;
-        const { slimeId } = req.params;
-
-        if (!slimeId || !authData) {
-            return res.status(400).json({ status: 400, message: "Datos incompletos" });
-        }
-
-        const { authId } = authData;
-
         try {
-            await this._slimeService.deleteSlime(
-                String(slimeId),
-                String(authId)
-            );
+            const { params, auth } = deleteSlimeSchema.parse({ params: req.params, auth: req.auth });
+            const { slimeId } = params;
+            const { authId } = auth;
+
+            await this._slimeService.deleteSlime(slimeId, authId);
             return res.status(204).send();
         } catch (error) {
             next(error);
@@ -88,16 +62,11 @@ export class SlimeController {
 
     // Funcion que obtiene los slimes registrados por un usuario
     async getMySlimes(req: Request, res: Response, next: NextFunction) {
-        const authData = req.auth;
-
-        if (!authData) {
-            return res.status(400).json({ status: 400, message: "Datos incompletos" });
-        }
-
-        const { authId } = authData;
-
         try {
-            const slimes = await this._slimeService.getMySlimes(String(authId));
+            const { auth } = getMySlimesSchema.parse({ auth: req.auth });
+            const { authId } = auth;
+
+            const slimes = await this._slimeService.getMySlimes(authId);
 
             return res.status(200).json({
                 status: 200,
@@ -111,21 +80,12 @@ export class SlimeController {
 
     // Funcion que obtiene los slimes registrados por un usuario
     async getMySlimeById(req: Request, res: Response, next: NextFunction) {
-        const authData = req.auth;
-        const { slimeId } = req.params;
-
-        if (!authData || !slimeId) {
-            return res.status(400).json({ status: 400, message: "Datos incompletos" });
-        }
-
-        const { authId } = authData;
-
         try {
-            // Convertir la query a String
-            const slime = await this._slimeService.getMySlimeById(
-                String(slimeId),
-                String(authId)
-            );
+            const { params, auth } = getMySlimeByIdSchema.parse({ params: req.params, auth: req.auth });
+            const { slimeId } = params;
+            const { authId } = auth;
+
+            const slime = await this._slimeService.getMySlimeById(slimeId, authId);
 
             return res.status(200).json({
                 status: 200,
