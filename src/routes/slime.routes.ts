@@ -1,5 +1,7 @@
 import express, { type Router, type Request, type Response } from 'express';
 import { slimeController } from '../controllers/slime.controller.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { tokenService } from '../services/token.service.js';
 
 const slimeRouter: Router = express.Router();
 
@@ -12,23 +14,43 @@ slimeRouter.get("/", (_req: Request, res: Response) => {
 });
 
 // CREAR un slime (POST)
-// Body: { name, color, ownerId }
-slimeRouter.post("/", slimeController.createSlime.bind(slimeController));
+// Body: { name, color }
+// Cookie: AccessToken
+slimeRouter.post(
+    "/",
+    slimeController.createSlime.bind(slimeController),
+);
 
 // ACTUALIZAR un slime (PUT)
-// Body: { slimeId, name, color, ownerId }
-slimeRouter.put("/", slimeController.updateSlime.bind(slimeController));
+// Body: { slimeId, name, color }
+// Cookie: AccessToken
+slimeRouter.put(
+    "/",
+    slimeController.updateSlime.bind(slimeController)
+);
 
 // ELIMINAR un slime (DELETE)
-// URL: /slime/?ownerId=123&slimeId=456
-slimeRouter.delete("/", slimeController.deleteSlime.bind(slimeController));
+// URL: /slime/456
+// Cookie: AccessToken
+slimeRouter.delete(
+    "/:slimeId",
+    slimeController.deleteSlime.bind(slimeController)
+);
 
-// OBTENER un slime específico por Query Params (GET)
-// URL ejemplo: /slime/search?ownerId=123&slimeId=456
-slimeRouter.get("/search", slimeController.getMySlimeById.bind(slimeController));
+// OBTENER un slime específico por Params (GET)
+// URL ejemplo: /slime/search/456
+// Cookie: AccessToken
+slimeRouter.get(
+    "/search/:slimeId",
+    slimeController.getMySlimeById.bind(slimeController)
+);
 
 // OBTENER todos los slimes de un usuario (GET)
-// URL: /slime/id-del-dueno
-slimeRouter.get("/:ownerId", slimeController.getMySlimes.bind(slimeController));
+// URL: /slime/my-slimes
+// Cookie: AccessToken
+slimeRouter.get(
+    "/my-slimes",
+    slimeController.getMySlimes.bind(slimeController)
+);
 
 export default slimeRouter;
