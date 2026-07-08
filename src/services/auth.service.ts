@@ -63,15 +63,13 @@ export class AuthService {
         expirationRefreshToken.setDate(expirationRefreshToken.getDate() + EXPIRATION_REFRESH_TOKEN);
 
         const accessToken = await this._tokenService.generateAccessToken({
-            sessionId: SESSION_ID,
-            userId: authData.id,
+            authId: authData.id,
         },
             expirationAccessToken
         );
 
         const refreshToken = await this._tokenService.generateRefreshToken({
             sessionId: SESSION_ID,
-            userId: authData.id,
         },
             expirationRefreshToken
         );
@@ -152,15 +150,13 @@ export class AuthService {
         expirationRefreshToken.setDate(expirationRefreshToken.getDate() + EXPIRATION_REFRESH_TOKEN);
 
         const accessToken = await this._tokenService.generateAccessToken({
-            sessionId: session.id,
-            userId: session.auth_id,
+            authId: session.auth_id,
         },
             expirationAccessToken
         );
 
         const refreshToken = await this._tokenService.generateRefreshToken({
             sessionId: session.id,
-            userId: session.auth_id,
         },
             expirationRefreshToken
         );

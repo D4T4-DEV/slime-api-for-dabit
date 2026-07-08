@@ -3,7 +3,7 @@ declare global {
         interface Request {
             // Propiedad para manejar las variables de auth
             auth?: {
-                userId: string;
+                authId: string;
                 sessionId: string;
             };
         }
