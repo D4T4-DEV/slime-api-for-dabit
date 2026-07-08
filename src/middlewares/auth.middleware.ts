@@ -35,7 +35,7 @@ export const authMiddleware = (
 
         // Adjuntar el payload al objeto request para uso posterior
         req.auth = {
-            userId: payload.authId,
+            userId: payload.userId,
             sessionId: payload.sessionId,
         };
 
